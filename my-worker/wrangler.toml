@@ -1,0 +1,7 @@
+name = "helloworld"
+type = "javascript"
+compatibility_date = "2024-03-30"
+account_id = ""
+workers_dev = true
+route = ""
+zone_id = ""
