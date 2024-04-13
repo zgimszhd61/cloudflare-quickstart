@@ -27,29 +27,39 @@ cd workers-ai
 接下来，你需要创建一个 Workers AI 绑定，这允许你的 worker 访问 Workers AI 服务，而无需自己管理 API 密钥。为了将 Workers AI 绑定到你的 worker，请在你的 `wrangler.toml` 文件末尾添加以下内容：
 
 ```toml
-[[mappings]]
-name = "AI_SERVICE"
-class_name = "AI"
+[ai]
+binding = "AI"
 ```
 
 这段配置将 Workers AI 服务绑定到你的 worker，允许你在 worker 中直接调用 AI 模型。
 
 ### 步骤 3: 编写和部署你的 Worker
 
-现在，你可以在你的 worker 中使用 Workers AI 服务了。编辑你的 `index.js` 文件，添加代码以调用一个 AI 模型。例如，如果你想运行 Llama 2 模型，你可以添加如下代码：
+现在，你可以在你的 worker 中使用 Workers AI 服务了。编辑你的 `index.ts` 文件，添加代码以调用一个 AI 模型。例如，如果你想运行 Llama 2 模型，你可以添加如下代码：
 
-```javascript
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request))
-})
-
-async function handleRequest(request) {
-  const response = await AI_SERVICE.run("llama-2", {
-    prompt: "Hello, world!",
-    max_tokens: 50,
-  })
-  return new Response(response.answer, {status: 200})
-}
+```typescript
+export interface Env {
+	AI: any;
+  }
+  
+  export default {
+	async fetch(request: Request, env: Env) {
+	    // 解析 URL
+   	    const url = new URL(request.url)
+  
+	    // 获取查询参数中的 'input' 参数
+	    const userInput = url.searchParams.get('input') || '没有提供输入'
+	    const response = await env.AI.run('@cf/meta/llama-2-7b-chat-int8', {
+		  prompt: userInput,
+		  max_tokens: 30,
+		  }
+	    );
+      return new Response(JSON.stringify(response), {
+        headers: { 'content-type': 'text/plain' },
+      })
+ 	//   return new Response(JSON.stringify(response));
+	},
+  };
 ```
 
 这段代码在接收到 HTTP 请求时，会调用 Llama 2 模型，并以 "Hello, world!" 作为提示。然后，它将模型的回答作为 HTTP 响应返回。
@@ -60,14 +70,11 @@ async function handleRequest(request) {
 wrangler publish
 ```
 
+然后测试代码如下：
+```
+  https://twilight-silence-cd73.lininruc.workers.dev/?input=hello
+```
 这就完成了一个简单的 Cloudflare Workers AI 快速开始示例，展示了如何在 Cloudflare 的全球网络上运行 AI 模型[5]。
 
-Citations:
-[1] https://developers.cloudflare.com/workers/get-started/quickstarts/
-[2] https://github.com/optimizely/cloudflare-worker-template
-[3] https://developers.cloudflare.com/workers/get-started/guide/
-[4] https://www.youtube.com/watch?v=uv1Cz_BDFmo
-[5] https://blog.cloudflare.com/workers-ai
-[6] https://www.youtube.com/watch?v=oZGDqCR4nZE
-[7] https://github.com/planetscale/cloudflare-workers-quickstart
-[8] https://blog.cloudflare.com/magic-in-minutes-how-to-build-a-chatgpt-plugin-with-cloudflare-workers
+## 参考教程
+ - https://developers.cloudflare.com/workers-ai/get-started/workers-wrangler/
