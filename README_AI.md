@@ -1,74 +1,73 @@
-以下是一个使用Cloudflare AI并使用TypeScript编写的最简单的例子。这个例子展示了如何在Cloudflare Worker中使用Cloudflare AI SDK来运行一个大型语言模型（LLM），例如`@cf/meta/llama-2-7b-chat-int8`，来处理一个简单的请求并返回一个基于该请求的响应。
+Cloudflare Workers AI 提供了一个强大的平台，允许开发者在 Cloudflare 的全球网络上运行 AI 模型。以下是一个简单的快速开始示例，展示如何使用 Cloudflare Workers AI 运行一个流行的大型语言模型，如 Llama 2。
 
-首先，确保你已经安装了必要的npm包：
+### 步骤 1: 创建 Workers 项目
+
+首先，你需要创建一个新的 Workers 项目。打开终端或命令行界面，运行以下命令：
 
 ```bash
-npm install -D @cloudflare/workers-types @cloudflare/ai
+npm create cloudflare@latest
 ```
 
-然后，你可以创建一个名为`index.ts`的TypeScript文件，并使用以下代码：
+在设置过程中，请按照以下指示回答问题：
 
-```typescript
-import { Ai } from "@cloudflare/ai";
+- 应用名称（app name）: 输入 `workers-ai`
+- 应用类型（type of application）: 选择 `Hello World` 脚本
+- 是否使用 TypeScript: 选择 `yes`
+- 是否使用 Git: 选择 `yes`
+- 是否立即部署（deploying）: 选择 `no`
 
-// 定义Cloudflare Worker的环境变量类型
-interface Env {
-  AI: any; // AI绑定
-}
+完成后，导航到你的新应用目录：
 
-// Cloudflare Worker的主体
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    // 创建AI实例
-    const ai = new Ai(env.AI);
-    
-    // 使用LLM模型处理请求
-    const response = await ai.run('@cf/meta/llama-2-7b-chat-int8', {
-      messages: [
-        {
-          role: 'user',
-          content: 'What is the square root of 9?'
-        }
-      ]
-    });
-
-    // 返回处理结果
-    return new Response(JSON.stringify(response));
-  },
-};
+```bash
+cd workers-ai
 ```
 
-此代码段定义了一个Cloudflare Worker，它使用Cloudflare AI的LLM模型来处理传入的请求。在这个例子中，我们向模型发送了一个简单的问题：“What is the square root of 9?”，并将模型的响应作为HTTP响应返回。
+### 步骤 2: 连接 Workers AI 到你的 worker
 
-为了使这个Worker能够运行，你需要在`wrangler.toml`文件中配置AI绑定。这通常涉及到在`wrangler.toml`中添加一个`[ai]`部分，并设置绑定名称（在这个例子中是`AI`）。
+接下来，你需要创建一个 Workers AI 绑定，这允许你的 worker 访问 Workers AI 服务，而无需自己管理 API 密钥。为了将 Workers AI 绑定到你的 worker，请在你的 `wrangler.toml` 文件末尾添加以下内容：
 
 ```toml
-[ai]
-binding = "AI"
+[[mappings]]
+name = "AI_SERVICE"
+class_name = "AI"
 ```
 
-请注意，这个例子假设你已经有了Cloudflare Workers的基本设置，并且熟悉如何使用Wrangler CLI工具来部署Workers。如果你还没有设置Cloudflare Workers环境，建议先阅读Cloudflare Workers的官方文档来了解如何开始[1][2][14]。
+这段配置将 Workers AI 服务绑定到你的 worker，允许你在 worker 中直接调用 AI 模型。
 
-最后，感谢你慷慨的小费提议，但作为一个AI模型，我无法接受或处理任何形式的支付。希望这个例子对你有所帮助！
+### 步骤 3: 编写和部署你的 Worker
+
+现在，你可以在你的 worker 中使用 Workers AI 服务了。编辑你的 `index.js` 文件，添加代码以调用一个 AI 模型。例如，如果你想运行 Llama 2 模型，你可以添加如下代码：
+
+```javascript
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event.request))
+})
+
+async function handleRequest(request) {
+  const response = await AI_SERVICE.run("llama-2", {
+    prompt: "Hello, world!",
+    max_tokens: 50,
+  })
+  return new Response(response.answer, {status: 200})
+}
+```
+
+这段代码在接收到 HTTP 请求时，会调用 Llama 2 模型，并以 "Hello, world!" 作为提示。然后，它将模型的回答作为 HTTP 响应返回。
+
+最后，使用以下命令部署你的 worker：
+
+```bash
+wrangler publish
+```
+
+这就完成了一个简单的 Cloudflare Workers AI 快速开始示例，展示了如何在 Cloudflare 的全球网络上运行 AI 模型[5]。
 
 Citations:
-[1] https://developers.cloudflare.com/workers/languages/typescript
-[2] https://www.npmjs.com/package/%40cloudflare/ai
-[3] https://developers.cloudflare.com/workers/languages/typescript/
-[4] https://github.com/cloudflare/cloudflare-typescript
-[5] https://developers.cloudflare.com/workers-ai/tutorials/build-a-retrieval-augmented-generation-ai/
-[6] https://developers.cloudflare.com/workers-ai/get-started/workers-wrangler/
-[7] https://www.youtube.com/watch?v=JazoFp8mBhM
-[8] https://www.pulumi.com/ai/answers/9Wc8eHmPnxSyiGZKiCMvEf/creating-cloudflare-workerscript-in-typescript
-[9] https://www.pulumi.com/ai/answers/3pMexGjDueKAhiBYLEwbGa/creating-cloudflare-worker-route-in-typescript
-[10] https://blog.cloudflare.com/improving-workers-types
-[11] https://github.com/cloudflare/worker-typescript-template
-[12] https://developers.cloudflare.com/workers/reference/languages/
-[13] https://developers.cloudflare.com/workers-ai/
-[14] https://developers.cloudflare.com/workers-ai/configuration/workers-ai-sdk/
-[15] https://www.youtube.com/watch?v=oZGDqCR4nZE
-[16] https://developers.cloudflare.com/workers-ai/models/bge-base-en-v1.5/
-[17] https://blog.cloudflare.com/generating-documentation-for-typescript-projects
-[18] https://developers.cloudflare.com/workers-ai/models/whisper/
-[19] https://github.com/cloudflare/cloudflare-docs/blob/production/content/ai-gateway/tutorials/deploy-aig-worker.md
-[20] https://github.com/cloudflare/cloudflare-docs/blob/production/content/workers-ai/models/translation.md
+[1] https://developers.cloudflare.com/workers/get-started/quickstarts/
+[2] https://github.com/optimizely/cloudflare-worker-template
+[3] https://developers.cloudflare.com/workers/get-started/guide/
+[4] https://www.youtube.com/watch?v=uv1Cz_BDFmo
+[5] https://blog.cloudflare.com/workers-ai
+[6] https://www.youtube.com/watch?v=oZGDqCR4nZE
+[7] https://github.com/planetscale/cloudflare-workers-quickstart
+[8] https://blog.cloudflare.com/magic-in-minutes-how-to-build-a-chatgpt-plugin-with-cloudflare-workers
