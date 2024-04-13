@@ -9,31 +9,30 @@ npm install --save-dev typescript @cloudflare/workers-types
 然后，创建一个`index.ts`文件，并添加以下代码：
 
 ```typescript
-import { Env } from '@cloudflare/workers-types';
+export default {
+  async fetch(request, env, ctx) {
+    if (request.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405 });
+    }
 
-interface Task {
-  id: string;
-  name: string;
-}
-
-export async function onRequest(context: EventContext<Env, 'fetch', FetchEvent>) {
-  const { env, request } = context;
-  const url = new URL(request.url);
-
-  if (url.pathname === '/tasks') {
     try {
-      const db = env.D1;
-      const result = await db.prepare('SELECT id, name FROM tasks').all<Task>();
-      return new Response(JSON.stringify(result), {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const data = await request.json();
+      if (!data.question || !data.answer) {
+        return new Response('Missing required fields', { status: 400 });
+      }
+
+      const { question, answer } = data;
+
+      const query = `INSERT INTO mmtest (question, answer) VALUES (:question, :answer)`;
+      await env.MYDD_DATABASE.prepare(query, { question, answer }).run();
+
+      return new Response('Data stored successfully', { status: 200 });
     } catch (error) {
-      return new Response('Database query failed', { status: 500 });
+      return new Response(`Error processing request: ${error}`, { status: 500 });
     }
   }
+};
 
-  return new Response('Not found', { status: 404 });
-}
 ```
 
 在这个例子中，我们定义了一个`Task`接口来描述从D1数据库中查询到的任务数据的结构。然后，在`onRequest`函数中，我们检查请求的URL路径。如果路径是`/tasks`，我们就准备一个SQL查询来从`tasks`表中选择所有任务，并使用`.all<Task>()`方法来执行查询并获取结果。这个方法返回一个`Task`数组，我们将这个数组转换为JSON格式，并通过`Response`对象返回给客户端。
@@ -53,6 +52,14 @@ database_id = "your-database-id"
 请确保将`your-worker-name`、`your-database-name`和`your-database-id`替换为实际的值。
 
 这个简单的例子展示了如何在Cloudflare Worker中使用TypeScript和D1数据库。希望这对你有所帮助！
+
+## 测试方法
+```
+curl -X POST 'https://xxxxxxxx.workers.dev' \
+-H 'Content-Type: application/json' \
+-d '{"question": "What is the capital of France?", "answer": "Paris"}'
+
+```
 
 Citations:
 [1] https://acnam.com/why-and-how-to-use-cloudflare-workers-explained-with-sample-code/
