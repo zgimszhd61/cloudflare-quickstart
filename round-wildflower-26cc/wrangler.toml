@@ -1,8 +1,0 @@
-name = "round-wildflower-26cc"
-main = "src/index.ts"
-compatibility_date = "2024-04-04"
-compatibility_flags = ["nodejs_compat"]
-
-[[r2_buckets]]
-binding = 'MY_BUCKET'
-bucket_name = 'mtestm'
