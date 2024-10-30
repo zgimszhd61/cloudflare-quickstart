@@ -27,3 +27,12 @@ CloudFlare的已经按照难度和优先级进行了排序，可以优先看C0->
 ## 联系方式
 
 如果你在使用过程中遇到问题或者有任何疑问，欢迎通过 Issue 联系我们。
+
+## Star History
+
+<a href="https://star-history.com/#zgimszhd61/cloudflare-quickstart&Date">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=zgimszhd61/cloudflare-quickstart&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=zgimszhd61/cloudflare-quickstart&type=Date" />
+  </picture>
+</a>
